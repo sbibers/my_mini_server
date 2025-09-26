@@ -11,11 +11,16 @@ A tiny multi-client TCP chat server implemented in C using `select(2)`. It liste
 
 ## Requirements
 - Linux or any POSIX-like system
-- GCC or Clang
+- CC Compiler
+
+## Clone
+```bash
+git clone https://github.com/sbibers/my_mini_server.git
+```
 
 ## Build
 ```bash
-gcc -Wall -Wextra -O2 my_mini_server.c -o my_mini_server
+cc -Wall -Wextra -Werror my_mini_server.c -o my_mini_server
 ```
 
 ## Run
