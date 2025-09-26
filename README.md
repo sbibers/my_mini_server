@@ -77,3 +77,27 @@ server: client 1 just left
 - This is a minimal educational server: no authentication, no IPv6, no TLS, no message size limits beyond process memory.
 - Client IDs are incremental per process lifetime and start at 0.
 
+## Safety: null checks and leak prevention
+- **Null checks**:
+  - Allocation sites (`malloc`) are checked; on failure the server closes the listening socket if open, frees all clients, and exits with `"Fatal error"`.
+  - Pointers are checked before access and free (e.g., client buffers, client nodes).
+  - `recv`/`accept`/`select` return values are validated; disconnects and errors are handled.
+- **Memory management**:
+  - Per-client buffers grow via copy-on-append and are freed when lines are processed or the client disconnects.
+  - Temporary allocations for line processing are freed immediately after broadcast.
+  - On shutdown, all clients are freed (`close(fd)` + free buffers + free nodes).
+- **File descriptor safety**:
+  - Each client socket is closed on removal; the listening socket is closed on shutdown and on fatal paths.
+  - The SIGINT handler closes the listening socket to unblock `select`, preventing a stuck descriptor.
+
+## Verifying no leaks
+- **Build with debug info** (optional for tooling):
+```bash
+cc -g -Wall -Wextra -Werror my_mini_server.c -o my_mini_server
+```
+
+- **Run with valgrind**:
+```bash
+valgrind --leak-check=full --show-leak-kinds=all --track-fds=yes ./my_mini_server 8080
+```
+
